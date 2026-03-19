@@ -12,6 +12,9 @@ public class OllamaService {
     }
 
     public String ask(String prompt) {
-        return chatClient.prompt(prompt).call().content();
+        return chatClient
+                .prompt(prompt)
+                .call()
+                .content();
     }
 }
