@@ -1,0 +1,21 @@
+direction: down
+
+Client: {
+  shape: person
+  label: "HTTP Client"
+}
+
+Client -> AgentController: "1) POST /api/agent/ask"
+AgentController -> Orchestrator: "2) Forward user question"
+Orchestrator -> Router: "3) Determine domain/route"
+Router -> Orchestrator: "4) Return selected route"
+Orchestrator -> Agent: "5) Delegate query handling"
+Agent -> RAG: "6) Request contextual data"
+RAG -> Agent: "7) Return context"
+Agent -> LLM: "8) Build prompt + send to LLM"
+LLM -> Ollama: "9) HTTP call to Ollama model"
+Ollama -> LLM: "10) Model response"
+LLM -> Agent: "11) Return generated answer"
+Agent -> Orchestrator: "12) Return final answer"
+Orchestrator -> AgentController: "13) Return response payload"
+AgentController -> Client: "14) HTTP response"
