@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>no.gov.multiple</groupId>
-	<artifactId>AgentApp</artifactId>
+	<artifactId>GovAIAssistant</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 
