@@ -1,6 +1,11 @@
 name: Setup Project Board and Issues
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/setup-project-board.yml'
   workflow_dispatch:
     inputs:
       dry_run:
@@ -27,8 +32,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check if setup already done
+        id: check
+        run: |
+          ISSUE_COUNT=$(gh issue list --repo "$REPO" --state all --label "must-have" --json number -q '. | length')
+          echo "existing_issues=$ISSUE_COUNT" >> $GITHUB_OUTPUT
+          if [ "$ISSUE_COUNT" -gt "0" ]; then
+            echo "Issues already exist ($ISSUE_COUNT found). Skipping creation."
+          fi
+
       - name: Create priority labels
-        if: ${{ inputs.dry_run == 'false' }}
+        if: ${{ inputs.dry_run != 'true' && steps.check.outputs.existing_issues == '0' }}
         run: |
           gh label create "must-have" --color "B60205" --description "Must have (MVP)" --repo "$REPO" 2>/dev/null || echo "Label 'must-have' already exists"
           gh label create "should-have" --color "E4E669" --description "Should have (post-MVP)" --repo "$REPO" 2>/dev/null || echo "Label 'should-have' already exists"
@@ -38,7 +52,7 @@ jobs:
           gh label create "devops" --color "006B75" --description "DevOps / Infrastructure" --repo "$REPO" 2>/dev/null || echo "Label 'devops' already exists"
 
       - name: Create Must-have (MVP) issues
-        if: ${{ inputs.dry_run == 'false' }}
+        if: ${{ inputs.dry_run != 'true' && steps.check.outputs.existing_issues == '0' }}
         run: |
           gh issue create \
             --title "Single chat API endpoint with session support" \
@@ -178,7 +192,7 @@ jobs:
             --repo "$REPO"
 
       - name: Create Should-have (post-MVP) issues
-        if: ${{ inputs.dry_run == 'false' }}
+        if: ${{ inputs.dry_run != 'true' && steps.check.outputs.existing_issues == '0' }}
         run: |
           gh issue create \
             --title "Streaming responses via Server-Sent Events (SSE)" \
@@ -295,7 +309,7 @@ jobs:
             --repo "$REPO"
 
       - name: Create Frontend (Should-have) issues
-        if: ${{ inputs.dry_run == 'false' }}
+        if: ${{ inputs.dry_run != 'true' && steps.check.outputs.existing_issues == '0' }}
         run: |
           gh issue create \
             --title "Next.js (App Router) + TypeScript frontend scaffold" \
@@ -507,7 +521,7 @@ jobs:
             --repo "$REPO"
 
       - name: Create Nice-to-have (production readiness) issues
-        if: ${{ inputs.dry_run == 'false' }}
+        if: ${{ inputs.dry_run != 'true' && steps.check.outputs.existing_issues == '0' }}
         run: |
           gh issue create \
             --title "Role-based access control for admin ingestion endpoint" \
@@ -651,7 +665,7 @@ jobs:
           echo " 19. Message actions: copy, regenerate, thumbs up/down feedback"
           echo " 20. Sources/citations drawer per assistant message (RAG transparency)"
           echo " 21. Error handling UX (timeouts, offline, model not running) + retry"
-          echo " 22. Basic accessibility pass (keyboard nav, focus states, ARIA labels)"
+          echo " 22. Basic accessibility pass (keyboard navigation, focus states, ARIA labels)"
           echo " 23. Responsive/mobile-first layout with Tailwind (chat + sidebar)"
           echo " 24. Frontend env/config documentation (NEXT_PUBLIC_API_BASE_URL, etc.)"
           echo ""
@@ -666,7 +680,7 @@ jobs:
           echo "TOTAL: 30 issues across 4 priority buckets"
 
       - name: Print post-run summary
-        if: ${{ inputs.dry_run == 'false' }}
+        if: ${{ inputs.dry_run != 'true' && steps.check.outputs.existing_issues == '0' }}
         run: |
           echo "## Setup complete!" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
