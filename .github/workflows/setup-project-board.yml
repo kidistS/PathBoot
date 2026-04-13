@@ -1,0 +1,699 @@
+name: Setup Project Board and Issues
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run (print issues without creating)"
+        required: false
+        default: "false"
+        type: choice
+        options:
+          - "false"
+          - "true"
+
+permissions:
+  issues: write
+  contents: read
+  repository-projects: write
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create priority labels
+        if: ${{ inputs.dry_run == 'false' }}
+        run: |
+          gh label create "must-have" --color "B60205" --description "Must have (MVP)" --repo "$REPO" 2>/dev/null || echo "Label 'must-have' already exists"
+          gh label create "should-have" --color "E4E669" --description "Should have (post-MVP)" --repo "$REPO" 2>/dev/null || echo "Label 'should-have' already exists"
+          gh label create "nice-to-have" --color "0E8A16" --description "Nice to have (production readiness)" --repo "$REPO" 2>/dev/null || echo "Label 'nice-to-have' already exists"
+          gh label create "frontend" --color "1D76DB" --description "Frontend work" --repo "$REPO" 2>/dev/null || echo "Label 'frontend' already exists"
+          gh label create "backend" --color "5319E7" --description "Backend work" --repo "$REPO" 2>/dev/null || echo "Label 'backend' already exists"
+          gh label create "devops" --color "006B75" --description "DevOps / Infrastructure" --repo "$REPO" 2>/dev/null || echo "Label 'devops' already exists"
+
+      - name: Create Must-have (MVP) issues
+        if: ${{ inputs.dry_run == 'false' }}
+        run: |
+          gh issue create \
+            --title "Single chat API endpoint with session support" \
+            --body "## Description
+          Implement a single REST endpoint \`POST /api/chat\` that accepts a user message and session ID, and returns an AI-generated answer.
+
+          ## Acceptance Criteria
+          - [ ] \`POST /api/chat\` endpoint accepts \`{ sessionId, message }\` payload
+          - [ ] Response includes \`{ answer, sessionId, domain }\`
+          - [ ] Sessions are persisted in-memory (or simple store) for follow-up context
+          - [ ] Health endpoint \`GET /api/health\` returns \`200 OK\`
+          - [ ] Basic integration test passes
+
+          ## Priority
+          **Must have (MVP)**
+
+          ## README Section
+          Backlog & Priorities → Must have (MVP)" \
+            --label "must-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Domain router (NAV/Tax/Immigration classification)" \
+            --body "## Description
+          Implement a domain router that classifies incoming questions into one of three domains: NAV (welfare), Tax, or Immigration.
+
+          ## Acceptance Criteria
+          - [ ] Router classifies messages into NAV, TAX, or IMMIGRATION domains
+          - [ ] Classification uses keyword matching and/or a lightweight prompt
+          - [ ] Unit tests cover at least 5 examples per domain
+          - [ ] Unrecognised queries fall back to a general handler
+
+          ## Priority
+          **Must have (MVP)**
+
+          ## README Section
+          Backlog & Priorities → Must have (MVP)" \
+            --label "must-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "RAG retrieval working with a small curated dataset" \
+            --body "## Description
+          Implement retrieval-augmented generation (RAG) with a curated small dataset of Norwegian government documents (NAV, Tax, Immigration).
+
+          ## Acceptance Criteria
+          - [ ] At least 10 documents are chunked and embedded
+          - [ ] Embeddings stored in a vector store (in-memory or local)
+          - [ ] Top-k similarity search retrieves relevant context for a query
+          - [ ] Retrieved context is included in the LLM prompt
+          - [ ] Unit test verifies retrieval returns non-empty results for known queries
+
+          ## Priority
+          **Must have (MVP)**
+
+          ## README Section
+          Backlog & Priorities → Must have (MVP)" \
+            --label "must-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Ollama integration (Mistral for chat; nomic-embed-text for RAG)" \
+            --body "## Description
+          Integrate Ollama as the local inference engine for both chat generation (Mistral) and embeddings (nomic-embed-text).
+
+          ## Acceptance Criteria
+          - [ ] Spring AI configured to use Ollama at \`http://localhost:11434\`
+          - [ ] Chat model: \`mistral\` (configurable via \`application.properties\`)
+          - [ ] Embedding model: \`nomic-embed-text\`
+          - [ ] \`app.ollama.auto-pull=true\` works correctly on first run
+          - [ ] Connection failure returns a clear error response (not 500)
+
+          ## Priority
+          **Must have (MVP)**
+
+          ## README Section
+          Backlog & Priorities → Must have (MVP)" \
+            --label "must-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Multilingual baseline (EN + NO + AM) via translation or prompting" \
+            --body "## Description
+          Implement multilingual support for English, Norwegian, and Amharic. The assistant should detect the user's language and respond in the same language.
+
+          ## Acceptance Criteria
+          - [ ] Language detection identifies EN, NO, and AM input
+          - [ ] System prompt instructs the LLM to respond in the detected language
+          - [ ] OR a translation layer translates the response post-generation
+          - [ ] Manual test: ask the same question in EN, NO, and AM and receive contextually correct answers
+          - [ ] Language preference can be passed explicitly in the request payload
+
+          ## Priority
+          **Must have (MVP)**
+
+          ## README Section
+          Backlog & Priorities → Must have (MVP)" \
+            --label "must-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Basic logging + error handling + health endpoint" \
+            --body "## Description
+          Add structured logging, global error handling, and a health check endpoint to the Spring Boot application.
+
+          ## Acceptance Criteria
+          - [ ] Each request logs: request ID, session ID, domain chosen, response time
+          - [ ] \`GET /api/health\` returns \`{ status: \"UP\" }\`
+          - [ ] Global exception handler returns structured JSON errors (not stack traces)
+          - [ ] LLM timeout or connection error returns \`503\` with a user-friendly message
+
+          ## Priority
+          **Must have (MVP)**
+
+          ## README Section
+          Backlog & Priorities → Must have (MVP)" \
+            --label "must-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Minimal unit tests (router + prompt builder)" \
+            --body "## Description
+          Write unit tests for the core logic components: domain router and prompt builder.
+
+          ## Acceptance Criteria
+          - [ ] At least 5 domain-router tests with known NAV/Tax/Immigration inputs
+          - [ ] Prompt-builder tests verify correct context injection
+          - [ ] Tests run with \`mvn test\` without requiring Ollama running
+          - [ ] CI pipeline runs tests on every push
+
+          ## Priority
+          **Must have (MVP)**
+
+          ## README Section
+          Backlog & Priorities → Must have (MVP)" \
+            --label "must-have,backend" \
+            --repo "$REPO"
+
+      - name: Create Should-have (post-MVP) issues
+        if: ${{ inputs.dry_run == 'false' }}
+        run: |
+          gh issue create \
+            --title "Streaming responses via Server-Sent Events (SSE)" \
+            --body "## Description
+          Implement streaming of LLM tokens to the client using Server-Sent Events (SSE) so users see responses in real-time.
+
+          ## Acceptance Criteria
+          - [ ] \`POST /api/chat/stream\` returns an SSE stream of token chunks
+          - [ ] Frontend (when added) can consume the stream progressively
+          - [ ] Stream ends with a \`[DONE]\` sentinel
+          - [ ] Manual test with \`curl -N\` shows incremental output
+
+          ## Priority
+          **Should have (post-MVP)**
+
+          ## README Section
+          Backlog & Priorities → Should have (after MVP)" \
+            --label "should-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Source citations (show which docs were retrieved)" \
+            --body "## Description
+          Return the source documents/snippets used during RAG retrieval alongside the LLM answer, for transparency and trust.
+
+          ## Acceptance Criteria
+          - [ ] Chat response includes a \`sources\` array with title, excerpt, and (if available) URL
+          - [ ] Sources are ranked by similarity score
+          - [ ] Unit test verifies sources are populated when retrieval returns results
+          - [ ] Empty sources list returned (not null) when no documents matched
+
+          ## Priority
+          **Should have (post-MVP)**
+
+          ## README Section
+          Backlog & Priorities → Should have (after MVP)" \
+            --label "should-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Admin ingestion endpoint + ingestion pipeline docs" \
+            --body "## Description
+          Add a secured admin endpoint (\`POST /api/admin/ingest\`) to add or update documents in the vector store, along with documentation for the ingestion pipeline.
+
+          ## Acceptance Criteria
+          - [ ] \`POST /api/admin/ingest\` accepts a JSON payload with document content and metadata
+          - [ ] Endpoint requires API-key authentication (configurable secret)
+          - [ ] Documents are chunked, embedded, and stored in the vector store
+          - [ ] \`docs/ingestion.md\` explains the ingestion process and supported formats
+
+          ## Priority
+          **Should have (post-MVP)**
+
+          ## README Section
+          Backlog & Priorities → Should have (after MVP)" \
+            --label "should-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "OpenAPI/Swagger documentation" \
+            --body "## Description
+          Add OpenAPI (Swagger UI) documentation for all REST endpoints.
+
+          ## Acceptance Criteria
+          - [ ] \`springdoc-openapi\` dependency added
+          - [ ] Swagger UI accessible at \`/swagger-ui.html\`
+          - [ ] All endpoints have descriptions, request/response schema
+          - [ ] Authentication requirements documented in the spec
+
+          ## Priority
+          **Should have (post-MVP)**
+
+          ## README Section
+          Backlog & Priorities → Should have (after MVP)" \
+            --label "should-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Docker + Docker Compose for full local stack" \
+            --body "## Description
+          Containerise the backend and provide a Docker Compose configuration that runs the complete local stack (backend + Ollama + vector store).
+
+          ## Acceptance Criteria
+          - [ ] \`Dockerfile\` builds the Spring Boot application
+          - [ ] \`docker-compose.yml\` starts backend, Ollama, and (if needed) vector store
+          - [ ] \`docker compose up\` succeeds on a clean machine with Docker installed
+          - [ ] README setup section updated with Docker instructions
+
+          ## Priority
+          **Should have (post-MVP)**
+
+          ## README Section
+          Backlog & Priorities → Should have (after MVP)" \
+            --label "should-have,devops" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "CI pipeline (GitHub Actions): build, test, lint" \
+            --body "## Description
+          Set up a GitHub Actions CI pipeline that runs on every push/PR: build, unit tests, and formatting/lint checks.
+
+          ## Acceptance Criteria
+          - [ ] Workflow triggers on push to \`main\` and all pull requests
+          - [ ] Steps: checkout → Java setup → \`mvn clean verify\` → lint/format check
+          - [ ] Build failure blocks PR merge
+          - [ ] Test results are reported in the workflow summary
+
+          ## Priority
+          **Should have (post-MVP)**
+
+          ## README Section
+          Backlog & Priorities → Should have (after MVP)" \
+            --label "should-have,devops" \
+            --repo "$REPO"
+
+      - name: Create Frontend (Should-have) issues
+        if: ${{ inputs.dry_run == 'false' }}
+        run: |
+          gh issue create \
+            --title "Next.js (App Router) + TypeScript frontend scaffold" \
+            --body "## Description
+          Initialise the frontend application using Next.js (App Router) with TypeScript and Tailwind CSS.
+
+          ## Acceptance Criteria
+          - [ ] \`frontend/\` directory created with \`next.js\` App Router scaffold
+          - [ ] TypeScript strict mode enabled
+          - [ ] Tailwind CSS configured and working
+          - [ ] \`npm run dev\` starts the dev server at \`http://localhost:3000\`
+          - [ ] \`NEXT_PUBLIC_API_BASE_URL\` env variable documented in \`.env.example\`
+
+          ## Priority
+          **Should have (post-MVP) — Frontend**
+
+          ## README Section
+          Backlog & Priorities → Frontend (Should have)" \
+            --label "should-have,frontend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Chat UI with conversation list + session switching" \
+            --body "## Description
+          Build the main chat interface with a conversation list sidebar and the ability to switch between sessions.
+
+          ## Acceptance Criteria
+          - [ ] Sidebar shows list of past conversations (title + timestamp)
+          - [ ] Clicking a conversation loads its message history
+          - [ ] New chat button starts a fresh session
+          - [ ] Active conversation highlighted in sidebar
+
+          ## Priority
+          **Should have (post-MVP) — Frontend**
+
+          ## README Section
+          Backlog & Priorities → Frontend (Should have)" \
+            --label "should-have,frontend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "SSE client for streaming token responses" \
+            --body "## Description
+          Implement the frontend SSE client that consumes the backend streaming endpoint and renders tokens progressively.
+
+          ## Acceptance Criteria
+          - [ ] Frontend connects to \`/api/chat/stream\` using EventSource or fetch with streaming
+          - [ ] Tokens appear in the chat bubble as they arrive
+          - [ ] Loading state shown until first token received
+          - [ ] Stream errors displayed gracefully
+
+          ## Priority
+          **Should have (post-MVP) — Frontend**
+
+          ## README Section
+          Backlog & Priorities → Frontend (Should have)" \
+            --label "should-have,frontend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "State management (Zustand) + data fetching (React Query)" \
+            --body "## Description
+          Set up Zustand for global UI state and React Query (TanStack Query) for server-state management and caching.
+
+          ## Acceptance Criteria
+          - [ ] Zustand store manages: current session, UI preferences, language setting
+          - [ ] React Query handles chat history fetch and cache invalidation
+          - [ ] No duplicate API calls on re-render
+
+          ## Priority
+          **Should have (post-MVP) — Frontend**
+
+          ## README Section
+          Backlog & Priorities → Frontend (Should have)" \
+            --label "should-have,frontend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Language selector + i18n wiring (EN/NO/AM) with persisted preference" \
+            --body "## Description
+          Add a language selector to the UI that switches between English, Norwegian, and Amharic. The selected language is persisted in localStorage and sent to the backend.
+
+          ## Acceptance Criteria
+          - [ ] Language selector dropdown in settings or header
+          - [ ] Supports EN, NO, AM
+          - [ ] Selected language persisted in localStorage
+          - [ ] Language sent in each API request so backend can respond in that language
+          - [ ] UI labels localised for at least EN and NO
+
+          ## Priority
+          **Should have (post-MVP) — Frontend**
+
+          ## README Section
+          Backlog & Priorities → Frontend (Should have)" \
+            --label "should-have,frontend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Message actions: copy, regenerate, thumbs up/down feedback" \
+            --body "## Description
+          Add per-message action buttons: copy to clipboard, regenerate response, and thumbs up/down feedback.
+
+          ## Acceptance Criteria
+          - [ ] Copy button copies message text to clipboard
+          - [ ] Regenerate sends the same prompt again for a new response
+          - [ ] Thumbs up/down captures feedback (sent to \`POST /api/feedback\` if available)
+          - [ ] Feedback UI does not block the conversation flow
+
+          ## Priority
+          **Should have (post-MVP) — Frontend**
+
+          ## README Section
+          Backlog & Priorities → Frontend (Should have)" \
+            --label "should-have,frontend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Sources/citations drawer per assistant message (RAG transparency)" \
+            --body "## Description
+          Show a collapsible \"Sources\" panel on each assistant message that lists the documents retrieved by RAG.
+
+          ## Acceptance Criteria
+          - [ ] \"Sources\" button appears on assistant messages that have retrieved docs
+          - [ ] Clicking opens a side drawer or inline accordion with source title + excerpt
+          - [ ] Source link opens the official URL if available
+          - [ ] Panel is hidden when no sources are available
+
+          ## Priority
+          **Should have (post-MVP) — Frontend**
+
+          ## README Section
+          Backlog & Priorities → Frontend (Should have)" \
+            --label "should-have,frontend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Error handling UX (timeouts, offline, model not running) + retry" \
+            --body "## Description
+          Implement user-friendly error states for common failure scenarios: network timeout, offline, and Ollama not running.
+
+          ## Acceptance Criteria
+          - [ ] Timeout (>30s) shows \"Taking too long — try again\" with a retry button
+          - [ ] Offline state shows a banner and disables the send button
+          - [ ] Ollama 503 shows \"AI model is not running. Start Ollama and try again.\"
+          - [ ] Retry button re-sends the last message
+
+          ## Priority
+          **Should have (post-MVP) — Frontend**
+
+          ## README Section
+          Backlog & Priorities → Frontend (Should have)" \
+            --label "should-have,frontend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Basic accessibility pass (keyboard navigation, focus states, ARIA labels)" \
+            --body "## Description
+          Ensure the chat UI meets baseline WCAG 2.1 AA accessibility requirements.
+
+          ## Acceptance Criteria
+          - [ ] All interactive elements reachable via keyboard (Tab/Enter)
+          - [ ] Focus indicators visible on all focusable elements
+          - [ ] ARIA labels on icon-only buttons
+          - [ ] Axe or Lighthouse accessibility score ≥ 90
+
+          ## Priority
+          **Should have (post-MVP) — Frontend**
+
+          ## README Section
+          Backlog & Priorities → Frontend (Should have)" \
+            --label "should-have,frontend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Responsive/mobile-first layout with Tailwind (chat + sidebar)" \
+            --body "## Description
+          Make the chat UI fully responsive and optimised for mobile devices using Tailwind CSS.
+
+          ## Acceptance Criteria
+          - [ ] Layout works at 375px (mobile), 768px (tablet), 1280px+ (desktop)
+          - [ ] Sidebar collapses to a hamburger menu on mobile
+          - [ ] Chat input stays visible above the keyboard on mobile
+          - [ ] No horizontal scroll at any breakpoint
+
+          ## Priority
+          **Should have (post-MVP) — Frontend**
+
+          ## README Section
+          Backlog & Priorities → Frontend (Should have)" \
+            --label "should-have,frontend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Frontend env/config documentation (NEXT_PUBLIC_API_BASE_URL, etc.)" \
+            --body "## Description
+          Document all frontend environment variables and configuration options in \`.env.example\` and the README.
+
+          ## Acceptance Criteria
+          - [ ] \`.env.example\` lists all \`NEXT_PUBLIC_*\` variables with descriptions
+          - [ ] README setup section explains each variable
+          - [ ] No hardcoded API URLs in the source code
+
+          ## Priority
+          **Should have (post-MVP) — Frontend**
+
+          ## README Section
+          Backlog & Priorities → Frontend (Should have)" \
+            --label "should-have,frontend" \
+            --repo "$REPO"
+
+      - name: Create Nice-to-have (production readiness) issues
+        if: ${{ inputs.dry_run == 'false' }}
+        run: |
+          gh issue create \
+            --title "Role-based access control for admin ingestion endpoint" \
+            --body "## Description
+          Add role-based access control (RBAC) to the admin ingestion endpoint so only authorised users can update the document store.
+
+          ## Acceptance Criteria
+          - [ ] Admin endpoints protected by API key or JWT role check
+          - [ ] Unauthenticated requests return \`401 Unauthorized\`
+          - [ ] Role configuration documented in \`application.properties\`
+
+          ## Priority
+          **Nice to have (production readiness)**
+
+          ## README Section
+          Backlog & Priorities → Nice to have (production readiness)" \
+            --label "nice-to-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Feedback capture and evaluation loop" \
+            --body "## Description
+          Implement a feedback loop where users can rate answers (thumbs up/down + optional comment), and results are stored for future evaluation.
+
+          ## Acceptance Criteria
+          - [ ] \`POST /api/feedback\` accepts \`{ sessionId, messageId, rating, comment }\`
+          - [ ] Feedback stored persistently (DB or file)
+          - [ ] Aggregate feedback stats available at \`GET /api/metrics/feedback\` (admin)
+
+          ## Priority
+          **Nice to have (production readiness)**
+
+          ## README Section
+          Backlog & Priorities → Nice to have (production readiness)" \
+            --label "nice-to-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "PII detection and redaction" \
+            --body "## Description
+          Add PII (Personally Identifiable Information) detection and redaction to prevent sensitive data from being stored or sent to the LLM.
+
+          ## Acceptance Criteria
+          - [ ] Common Norwegian PII patterns detected: personnummer, phone, email
+          - [ ] Detected PII replaced with placeholder tokens before LLM processing
+          - [ ] Redaction logged (type only, not value) for audit purposes
+
+          ## Priority
+          **Nice to have (production readiness)**
+
+          ## README Section
+          Backlog & Priorities → Nice to have (production readiness)" \
+            --label "nice-to-have,backend" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Observability: metrics + distributed tracing" \
+            --body "## Description
+          Add Prometheus metrics and distributed tracing (OpenTelemetry) to monitor the application in production.
+
+          ## Acceptance Criteria
+          - [ ] \`GET /actuator/prometheus\` exposes metrics
+          - [ ] Key metrics tracked: request latency, LLM response time, domain distribution, error rate
+          - [ ] OpenTelemetry traces sent to a configurable collector
+          - [ ] Grafana dashboard template provided (optional)
+
+          ## Priority
+          **Nice to have (production readiness)**
+
+          ## README Section
+          Backlog & Priorities → Nice to have (production readiness)" \
+            --label "nice-to-have,devops" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Cloud deployment templates (Azure Container Apps / AKS)" \
+            --body "## Description
+          Provide Infrastructure-as-Code templates for deploying the application on Azure Container Apps or AKS.
+
+          ## Acceptance Criteria
+          - [ ] Bicep or Terraform template for Azure Container Apps deployment
+          - [ ] \`docs/deploy-azure.md\` with step-by-step instructions
+          - [ ] CI/CD pipeline extended with a \`deploy\` job (manual trigger)
+          - [ ] Secrets managed via Azure Key Vault
+
+          ## Priority
+          **Nice to have (production readiness)**
+
+          ## README Section
+          Backlog & Priorities → Nice to have (production readiness)" \
+            --label "nice-to-have,devops" \
+            --repo "$REPO"
+
+          gh issue create \
+            --title "Domain expansion + richer agent tooling (forms, calculators, checklists)" \
+            --body "## Description
+          Extend the domain agents with richer tooling: interactive forms, benefit calculators, and structured checklists.
+
+          ## Acceptance Criteria
+          - [ ] At least one domain (NAV recommended) has a guided form flow
+          - [ ] Benefit eligibility calculator for at least one NAV benefit
+          - [ ] Structured checklists returned for multi-step processes
+          - [ ] Agent tool registry designed for extensibility
+
+          ## Priority
+          **Nice to have (production readiness)**
+
+          ## README Section
+          Backlog & Priorities → Nice to have (production readiness)" \
+            --label "nice-to-have,backend" \
+            --repo "$REPO"
+
+      - name: Print dry-run summary
+        if: ${{ inputs.dry_run == 'true' }}
+        run: |
+          echo "=== DRY RUN: Issues that would be created ==="
+          echo ""
+          echo "MUST HAVE (MVP) — 7 issues:"
+          echo "  1. Single chat API endpoint with session support"
+          echo "  2. Domain router (NAV/Tax/Immigration classification)"
+          echo "  3. RAG retrieval working with a small curated dataset"
+          echo "  4. Ollama integration (Mistral for chat; nomic-embed-text for RAG)"
+          echo "  5. Multilingual baseline (EN + NO + AM) via translation or prompting"
+          echo "  6. Basic logging + error handling + health endpoint"
+          echo "  7. Minimal unit tests (router + prompt builder)"
+          echo ""
+          echo "SHOULD HAVE (post-MVP) — 6 issues:"
+          echo "  8. Streaming responses via Server-Sent Events (SSE)"
+          echo "  9. Source citations (show which docs were retrieved)"
+          echo " 10. Admin ingestion endpoint + ingestion pipeline docs"
+          echo " 11. OpenAPI/Swagger documentation"
+          echo " 12. Docker + Docker Compose for full local stack"
+          echo " 13. CI pipeline (GitHub Actions): build, test, lint"
+          echo ""
+          echo "FRONTEND (Should have) — 11 issues:"
+          echo " 14. Next.js (App Router) + TypeScript frontend scaffold"
+          echo " 15. Chat UI with conversation list + session switching"
+          echo " 16. SSE client for streaming token responses"
+          echo " 17. State management (Zustand) + data fetching (React Query)"
+          echo " 18. Language selector + i18n wiring (EN/NO/AM) with persisted preference"
+          echo " 19. Message actions: copy, regenerate, thumbs up/down feedback"
+          echo " 20. Sources/citations drawer per assistant message (RAG transparency)"
+          echo " 21. Error handling UX (timeouts, offline, model not running) + retry"
+          echo " 22. Basic accessibility pass (keyboard nav, focus states, ARIA labels)"
+          echo " 23. Responsive/mobile-first layout with Tailwind (chat + sidebar)"
+          echo " 24. Frontend env/config documentation (NEXT_PUBLIC_API_BASE_URL, etc.)"
+          echo ""
+          echo "NICE TO HAVE (production readiness) — 6 issues:"
+          echo " 25. Role-based access control for admin ingestion endpoint"
+          echo " 26. Feedback capture and evaluation loop"
+          echo " 27. PII detection and redaction"
+          echo " 28. Observability: metrics + distributed tracing"
+          echo " 29. Cloud deployment templates (Azure Container Apps / AKS)"
+          echo " 30. Domain expansion + richer agent tooling (forms, calculators, checklists)"
+          echo ""
+          echo "TOTAL: 30 issues across 4 priority buckets"
+
+      - name: Print post-run summary
+        if: ${{ inputs.dry_run == 'false' }}
+        run: |
+          echo "## Setup complete!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Issues created: 30" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Priority | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Must have (MVP) | 7 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Should have (post-MVP) | 6 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Frontend (Should have) | 11 |" >> $GITHUB_STEP_SUMMARY
+          echo "| Nice to have (production) | 6 |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Labels created" >> $GITHUB_STEP_SUMMARY
+          echo "- \`must-have\` (red)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`should-have\` (yellow)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`nice-to-have\` (green)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`frontend\` (blue)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`backend\` (purple)" >> $GITHUB_STEP_SUMMARY
+          echo "- \`devops\` (teal)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next step: Create GitHub Project (v2) Kanban board" >> $GITHUB_STEP_SUMMARY
+          echo "To create the project board and add all issues, run:" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "# Requires a PAT with 'project' scope (GITHUB_TOKEN lacks this permission)" >> $GITHUB_STEP_SUMMARY
+          echo "export GH_TOKEN=<your-pat-with-project-scope>" >> $GITHUB_STEP_SUMMARY
+          echo "PROJECT_ID=\$(gh project create --owner kidistS --title 'GovAI Assistant Kanban' --format json | jq -r '.number')" >> $GITHUB_STEP_SUMMARY
+          echo "gh project link \$PROJECT_ID --owner kidistS --repo PathBoot" >> $GITHUB_STEP_SUMMARY
+          echo "# Then add all open issues:" >> $GITHUB_STEP_SUMMARY
+          echo "gh issue list --repo kidistS/PathBoot --state open --json number -q '.[].number' | xargs -I{} gh project item-add \$PROJECT_ID --owner kidistS --url \"https://github.com/kidistS/PathBoot/issues/{}\"" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
