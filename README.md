@@ -1,50 +1,43 @@
 # PathBoot Project Documentation
 
 ## Project Overview
-This project is designed to provide robust solutions for AI chat applications. Its primary components and interactions are outlined below.
+PathBoot is a Java Spring Boot web application that integrates Spring AI with a locally running Ollama server to enable chat/assistant capabilities backed by an on-device LLM.
 
 ## Architecture Artifacts
-- **AgentApp-Architecture.d2**  
-- **d2_diagram.png**  
+- `AgentApp-Architecture.d2`
+- `d2_diagram .png`
 
 ## Prerequisites
-To get started with this project, ensure you have the following installed:
 - Java 17
 - Maven
 - Ollama
 
-## Configuration
-You can configure the application properties in the following file:
-```
-src/main/resources/application.properties
-```
-Make sure to include the following configurations:
-```
-spring.ai.ollama.base-url={your_base_url}
-spring.ai.ollama.chat.model={model_name}
-app.ollama.auto-pull=true
-```
+### Install Ollama
+Follow the official Ollama installation guide:
+- https://docs.ollama.com/
 
-## How to Run
-To get the application up and running, execute the following commands:
-1. Start the Ollama server:
-   ```
-   ollama serve
-   ```
-2. Pull the required model:
-   ```
+## Configuration
+Application configuration is in:
+- `src/main/resources/application.properties`
+
+Current default settings:
+- `spring.ai.ollama.base-url=http://localhost:11434`
+- `spring.ai.ollama.chat.model=mistral`
+- `app.ollama.auto-pull=true`
+
+## Run locally
+1. Start Ollama (ensure it is reachable at `http://localhost:11434`).
+2. Pull the model configured in `application.properties` (default: `mistral`):
+   ```bash
    ollama pull mistral
    ```
-3. Run the Spring Boot application:
-   ```
+3. Run the Spring Boot app:
+   ```bash
    mvn spring-boot:run
    ```
 
-## How to Change the Model
-To change the model, modify the `spring.ai.ollama.chat.model` entry in the `application.properties` file to your desired model name.
+## Change the model
+Edit `spring.ai.ollama.chat.model` in `src/main/resources/application.properties` to any model you have available in Ollama.
 
-## Troubleshooting Tips
-- If you encounter issues, please check that all prerequisites are correctly installed and configured.
-- Verify that the base URL for Ollama is accessible.
-
-> **Note:** The repository currently has no top-level agents/ directory visible on the main branch.
+## Notes
+- The repository currently has no top-level `agents/` directory visible on the `main` branch. If you expected it, it may be on another branch or under a different path.
